@@ -47,6 +47,7 @@
             height: 100%;
             margin: 0;
             overflow: hidden;
+            overflow-x: hidden;
             font-family: 'Inter', sans-serif;
             background: var(--bg-canvas);
         }
@@ -56,6 +57,7 @@
             display: flex;
             height: 100vh;
             width: 100vw;
+            overflow-x: hidden;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -520,6 +522,28 @@
             #reader-display {
                 padding: 30px 40px;
             }
+
+            /* Toolbar Mobile Adjustments */
+            .reader-toolbar {
+                padding: 0 0.5rem;
+            }
+
+            #zoom-label {
+                display: none;
+            }
+
+            #pdf-nav-controls {
+                gap: 5px;
+                padding: 0 4px !important;
+            }
+
+            #current-page-input {
+                width: 38px !important;
+            }
+
+            .btn-tool {
+                padding: 4px 8px;
+            }
         }
     </style>
 </head>
@@ -693,7 +717,7 @@
                 </div>
 
                 <div class="d-flex align-items-center">
-                    <button class="btn-tool ms-2" title="Print View" onclick="window.print()"><i
+                    <button class="btn-tool ms-2 d-none d-sm-flex" title="Print View" onclick="window.print()"><i
                             class="fa-solid fa-print"></i></button>
                 </div>
             </header>
@@ -767,6 +791,13 @@
                 $(this).removeClass('visible');
             });
 
+            function collapseSidebarOnMobile() {
+                if (window.innerWidth <= 992) {
+                    $('#sidebar').addClass('collapsed');
+                    $('#toolbar-sidebar-toggle').addClass('visible');
+                }
+            }
+
             // Update Reader
             $('#update-btn').on('click', function () {
                 const txt = $('#hindi-input').val().trim();
@@ -777,6 +808,7 @@
                     $('#lang-badge').text(`${sourceLangName} → Multiple`);
                     $('.empty-state').hide();
                     $('#pdf-nav-controls').addClass('d-none'); // Hide PDF nav
+                    collapseSidebarOnMobile();
                 } else {
                     $('#reader-display').css('display', 'none').empty();
                     $('.empty-state').show();
@@ -847,6 +879,7 @@
 
                         $('#pdf-loader').hide();
                         updateZoom(); // Apply current zoom
+                        collapseSidebarOnMobile();
                     };
                     reader.readAsArrayBuffer(file);
                 } catch (err) {
@@ -940,10 +973,7 @@
             // --- Translation Logic ---
             let currentSelection = "";
 
-            $(document).on('mouseup', function (e) {
-                // If clicking on a button or inside the translation bar itself, don't trigger new selection
-                if ($(e.target).closest('#translation-bar, #sidebar, .reader-toolbar').length > 0) return;
-
+            $(document).on('selectionchange', function () {
                 clearTimeout(debounce);
                 debounce = setTimeout(processSelection, 250);
             });
@@ -1001,7 +1031,11 @@
                 // Show bar and loaders
                 $('#selection-txt').text(sel);
                 $('#target-1-result, #target-2-result').html('<span class="loading-pulse"></span>');
-                $('#translation-bar').addClass('show');
+
+                // Ensure the translation bar shows up correctly
+                setTimeout(() => {
+                    $('#translation-bar').addClass('show');
+                }, 50);
 
                 try {
                     const results = await getTranslations(sel, sl, tl1, tl2);
