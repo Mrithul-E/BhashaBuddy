@@ -201,6 +201,9 @@
         .textLayer {
             opacity: 1;
             mix-blend-mode: multiply;
+            /* Prevent mobile browsers from "inflating" font sizes which breaks selection alignment */
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
         }
 
         .textLayer ::selection {
@@ -948,11 +951,16 @@
                         'transform-origin': 'top center'
                     });
 
-                    // Fix overlaps: set wrapper height to the scaled height of its child
+                    // Fix overlaps and excessive gaps: set wrapper height to the visible scaled height
                     $('.pdf-page-wrapper').each(function () {
-                        const basePageHeight = $(this).find('canvas')[0].height;
-                        const scaledHeight = (basePageHeight * scale) + 60; // 60 for badge + margins
-                        $(this).css('height', scaledHeight + 'px');
+                        const canvas = $(this).find('canvas')[0];
+                        if (canvas) {
+                            // Using getBoundingClientRect().height instead of canvas.height
+                            // ensures we get the actual visible height after CSS scaling (max-width: 100%)
+                            const visibleHeight = canvas.getBoundingClientRect().height;
+                            const scaledHeight = visibleHeight + 60; // 60 for badge + margins
+                            $(this).css('height', scaledHeight + 'px');
+                        }
                     });
 
                     $('#reader-display').css('height', 'auto');
